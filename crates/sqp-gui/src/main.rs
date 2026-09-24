@@ -1,3 +1,5 @@
+mod qr;
+
 use chrono::{Datelike, Local, Months};
 use eframe::egui;
 use sqp_core::{
@@ -119,7 +121,15 @@ impl eframe::App for App {
             ui.heading("Results");
             egui::ScrollArea::vertical().show(ui, |ui| {
                 for g in &self.results {
-                    ui.monospace(&g.code);
+                    ui.horizontal(|ui| {
+                        let (side, rgba) = qr::qr_rgba(&g.code_undashed, 4);
+                        let image = egui::ColorImage::from_rgba_unmultiplied([side, side], &rgba);
+                        let tex =
+                            ui.ctx()
+                                .load_texture(&g.code, image, egui::TextureOptions::NEAREST);
+                        ui.image((tex.id(), egui::vec2(120.0, 120.0)));
+                        ui.monospace(&g.code);
+                    });
                     ui.separator();
                 }
             });
