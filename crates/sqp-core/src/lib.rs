@@ -1,6 +1,7 @@
 //! `sqp-core` — pure, UI-free port of the `platform01` Ruby SQP code generator.
 
 pub mod bytepool;
+pub mod codec;
 pub mod maps;
 pub mod rc6;
 pub mod rfe32;
@@ -19,4 +20,6 @@ pub enum SqpError {
     /// A combination of fields that does not correspond to a real SKU
     /// (e.g. SQSG3 + Clear).
     InvalidCombo(String),
+    /// A code could not be decoded (bad length or structure).
+    DecodeError(String),
 }
