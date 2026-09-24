@@ -36,7 +36,7 @@ impl Default for App {
     fn default() -> Self {
         let today = Local::now().date_naive();
         let exp = today.checked_add_months(Months::new(12)).unwrap();
-        Self {
+        let mut app = Self {
             ink_type: InkType::Kx2,
             color: "Cyan".to_string(),
             volume_l: 5,
@@ -47,7 +47,27 @@ impl Default for App {
             results: Vec::new(),
             produced: HashSet::new(),
             error: None,
+        };
+        // Demo mode: pre-generate a sample batch so the app opens with codes +
+        // QR codes already rendered. Handy for headless screenshots / smoke
+        // tests; has no effect on a normal launch.
+        if std::env::var_os("SQP_DEMO").is_some() {
+            app.count = 3;
+            let req = GenerateRequest {
+                ink_type: app.ink_type,
+                color: app.color.clone(),
+                volume_l: app.volume_l,
+                expires_year: app.expires_year,
+                expires_month: app.expires_month,
+                batch: app.batch.clone(),
+                count: app.count,
+            };
+            match generate(&req, &mut app.produced) {
+                Ok(mut codes) => app.results.append(&mut codes),
+                Err(e) => app.error = Some(format!("{e:?}")),
+            }
         }
+        app
     }
 }
 
