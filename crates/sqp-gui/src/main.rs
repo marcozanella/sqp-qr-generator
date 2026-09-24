@@ -119,6 +119,33 @@ impl eframe::App for App {
 
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("Results");
+
+            if !self.results.is_empty() && ui.button("Export all (PNGs + CSV)").clicked() {
+                if let Some(dir) = rfd::FileDialog::new().pick_folder() {
+                    let mut csv =
+                        String::from("code,ink_type,color,volume,expires,batch,number\n");
+                    for g in &self.results {
+                        let png = qr::qr_png_bytes(&g.code_undashed, 6);
+                        let _ = std::fs::write(dir.join(format!("{}.png", g.code_undashed)), png);
+                        csv.push_str(&format!(
+                            "{},{},{},{},{:02}/{},{},{}\n",
+                            g.code,
+                            match self.ink_type {
+                                InkType::Kx2 => "KX2",
+                                InkType::Sqsg3 => "SQSG3",
+                            },
+                            self.color,
+                            self.volume_l,
+                            self.expires_month,
+                            self.expires_year,
+                            self.batch,
+                            g.number
+                        ));
+                    }
+                    let _ = std::fs::write(dir.join("codes.csv"), csv);
+                }
+            }
+
             egui::ScrollArea::vertical().show(ui, |ui| {
                 for g in &self.results {
                     ui.horizontal(|ui| {
@@ -129,6 +156,17 @@ impl eframe::App for App {
                                 .load_texture(&g.code, image, egui::TextureOptions::NEAREST);
                         ui.image((tex.id(), egui::vec2(120.0, 120.0)));
                         ui.monospace(&g.code);
+                        if ui.button("Copy").clicked() {
+                            ui.output_mut(|o| o.copied_text = g.code.clone());
+                        }
+                        if ui.button("Save QR").clicked() {
+                            if let Some(path) = rfd::FileDialog::new()
+                                .set_file_name(format!("{}.png", g.code_undashed))
+                                .save_file()
+                            {
+                                let _ = std::fs::write(path, qr::qr_png_bytes(&g.code_undashed, 6));
+                            }
+                        }
                     });
                     ui.separator();
                 }
