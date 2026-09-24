@@ -3,8 +3,10 @@
 Native desktop app that generates SQP ink-canister codes and printable QR
 codes. Offline; a single binary per OS (macOS, Windows, Linux).
 
-> **Status:** design + implementation plan committed; code is built
-> task-by-task per `docs/superpowers/plans/2026-09-24-sqp-qr-generator.md`.
+> **Status:** implemented. `sqp-core` is a byte-for-byte port of the Ruby
+> generator, verified against committed reference vectors; `sqp-gui` is the
+> egui/eframe desktop front-end. Built per
+> `docs/superpowers/plans/2026-09-24-sqp-qr-generator.md`.
 
 ## Self-contained repository
 
@@ -61,6 +63,11 @@ Bundle: `target/release/bundle/osx/SQP QR Generator.app`
     cargo build --release -p sqp-gui
 
 Binary: `target/release/sqp-gui`
+
+Running the GUI on Linux needs the usual desktop libraries at runtime (X11 or
+Wayland, plus `libxkbcommon`); on Debian/Ubuntu:
+
+    sudo apt-get install libx11-dev libxkbcommon-dev libwayland-dev
 
 ## Notes
 
