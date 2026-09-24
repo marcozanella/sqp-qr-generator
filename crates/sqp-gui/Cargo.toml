@@ -1,0 +1,14 @@
+[package]
+name = "sqp-gui"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sqp-core = { path = "../sqp-core" }
+eframe = "0.27"
+egui = "0.27"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+qrcode = "0.14"
+image = { version = "0.25", default-features = false, features = ["png"] }
+rfd = "0.14"
+arboard = "3"
