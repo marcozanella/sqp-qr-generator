@@ -21,7 +21,20 @@ separate Rails app, but everything required is copied in here:
 That means a cloud Claude Code session (or any fresh clone) can build and
 verify the project from this repository alone.
 
-## Prerequisites
+## Download a prebuilt macOS app (no Rust needed)
+
+Every push builds a **universal** macOS app (Apple Silicon + Intel) via GitHub
+Actions. To get it:
+
+1. Open the repo's **Actions** tab → the latest "CI + macOS build" run.
+2. Under **Artifacts**, download **`SQP-QR-Generator-macos-app`**.
+3. Unzip it, then unzip the inner `SQP-QR-Generator-macos-universal.zip` to get
+   `SQP QR Generator.app`.
+4. The app is unsigned, so on first launch **right-click → Open** (once) to get
+   past Gatekeeper. If macOS still blocks it:
+   `xattr -dr com.apple.quarantine "SQP QR Generator.app"`.
+
+## Prerequisites (to build locally)
 
 - Rust (stable) via https://rustup.rs
 

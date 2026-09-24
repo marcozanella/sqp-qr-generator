@@ -1,0 +1,90 @@
+name: CI + macOS build
+
+on:
+  push:
+    branches: ["main", "main-nmpa5j"]
+  pull_request:
+  workflow_dispatch: {} # lets you trigger a build by hand from the Actions tab
+
+jobs:
+  # Fast correctness gate: the pure algorithm crate has no system dependencies,
+  # so this verifies byte-identical output on every push in seconds.
+  core-tests:
+    name: Core algorithm tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: cargo test -p sqp-core
+        run: cargo test -p sqp-core
+
+  # Builds a universal macOS binary + .app bundle you can download and run
+  # without any local Rust toolchain.
+  macos-app:
+    name: Build macOS app (universal)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin, x86_64-apple-darwin
+
+      - name: Run the full test suite (core + GUI)
+        run: cargo test
+
+      - name: Build release binaries for both architectures
+        run: |
+          cargo build --release -p sqp-gui --target aarch64-apple-darwin
+          cargo build --release -p sqp-gui --target x86_64-apple-darwin
+
+      - name: Combine into a universal binary
+        run: |
+          mkdir -p dist
+          lipo -create -output dist/sqp-gui \
+            target/aarch64-apple-darwin/release/sqp-gui \
+            target/x86_64-apple-darwin/release/sqp-gui
+          lipo -info dist/sqp-gui
+
+      - name: Assemble the .app bundle
+        run: |
+          APP="dist/SQP QR Generator.app"
+          mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+          cp dist/sqp-gui "$APP/Contents/MacOS/sqp-gui"
+          chmod +x "$APP/Contents/MacOS/sqp-gui"
+          # sed strips the YAML block indentation so the XML declaration sits at
+          # column 0 (an XML prolog must not be preceded by whitespace).
+          sed 's/^[[:space:]]*//' > "$APP/Contents/Info.plist" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleName</key><string>SQP QR Generator</string>
+            <key>CFBundleDisplayName</key><string>SQP QR Generator</string>
+            <key>CFBundleIdentifier</key><string>com.marcozanella.sqp-qr-generator</string>
+            <key>CFBundleVersion</key><string>0.1.0</string>
+            <key>CFBundleShortVersionString</key><string>0.1.0</string>
+            <key>CFBundleExecutable</key><string>sqp-gui</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>LSMinimumSystemVersion</key><string>10.15</string>
+            <key>NSHighResolutionCapable</key><true/>
+          </dict>
+          </plist>
+          PLIST
+
+      - name: Zip the .app (ditto preserves executable bits)
+        run: |
+          cd dist
+          ditto -c -k --keepParent "SQP QR Generator.app" "SQP-QR-Generator-macos-universal.zip"
+
+      - name: Upload the .app bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: SQP-QR-Generator-macos-app
+          path: dist/SQP-QR-Generator-macos-universal.zip
+
+      - name: Upload the raw universal binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: sqp-gui-macos-universal-binary
+          path: dist/sqp-gui
