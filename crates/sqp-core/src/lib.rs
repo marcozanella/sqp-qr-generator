@@ -1,6 +1,7 @@
 //! `sqp-core` — pure, UI-free port of the `platform01` Ruby SQP code generator.
 
 pub mod bytepool;
+pub mod rc6;
 pub mod rfe32;
 
 /// All fallible operations in `sqp-core` return this error type.
