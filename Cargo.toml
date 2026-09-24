@@ -1,0 +1,3 @@
+[workspace]
+members = ["crates/sqp-core", "crates/sqp-gui"]
+resolver = "2"
